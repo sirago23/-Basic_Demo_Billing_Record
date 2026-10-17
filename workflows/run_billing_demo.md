@@ -32,3 +32,5 @@ Run the income/expense web app locally and present it in a live demo.
 - Wrong income/expense: check `OWNER_NAME` matches the name on the slip.
 - Charts blank: Chart.js loads from a CDN, so the machine needs internet.
 - Accepted images: JPG, PNG, WEBP up to 5MB. No PDF, no multi-upload; the image is not stored.
+- Every slip returns "อ่านรูปนี้ไม่ได้" (422): the real cause is printed to stderr by `extract_receipt.py`. `claude-sonnet-5-5` rejects forced `tool_choice` (type "tool"/"any"), so the tool uses `auto` and the prompt tells the model to always call `record_transaction`.
+- Image extension can lie (a `.jpeg` that is really PNG gives a 400 media-type error). `extract()` now detects the type from the file's magic bytes.

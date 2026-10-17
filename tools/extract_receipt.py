@@ -53,6 +53,9 @@ def _system_prompt():
     return (
         "คุณอ่านสลิปโอนเงินธนาคารและใบเสร็จร้านค้าของไทย แล้วเรียก tool record_transaction เสมอ\n"
         f"เจ้าของบัญชีชื่อ: {owner}\n"
+        "- ชื่อข้างต้นอาจมีหลายรูปแบบ (ไทย/อังกฤษ/ตัวย่อ) แต่เป็นบุคคลเดียวกัน "
+        "สลิปแต่ละธนาคารแสดงชื่อต่างกัน อาจมีหรือไม่มีคำนำหน้า เป็นภาษาไทยหรืออังกฤษ ถูกตัดหรือย่อ "
+        "หรือปิดบางตัวอักษรด้วย x/* ให้จับคู่แบบยืดหยุ่นโดยไม่ต้องตรงทุกตัวอักษร\n"
         "- ถ้าเจ้าของบัญชีเป็นผู้รับเงิน = income; ถ้าเป็นผู้โอน = expense; ใบเสร็จร้านค้า = expense\n"
         "- ปีในสลิปไทยมักเป็น พ.ศ. ให้แปลงเป็น ค.ศ. (ลบ 543) และตอบวันที่เป็น YYYY-MM-DD\n"
         "- description คือชื่อร้าน ผู้รับ หรือผู้โอน\n"
@@ -88,7 +91,19 @@ def _normalize(raw):
     }
 
 
+def _sniff(image_bytes, fallback):
+    """Trust the file's magic bytes over the declared type/extension."""
+    if image_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if image_bytes.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP":
+        return "image/webp"
+    return fallback
+
+
 def extract(image_bytes, media_type):
+    media_type = _sniff(image_bytes, media_type)
     if media_type not in MEDIA_TYPES.values():
         raise ExtractError("รองรับเฉพาะไฟล์รูป JPG, PNG หรือ WEBP", 415)
     if len(image_bytes) > MAX_BYTES:
@@ -106,7 +121,7 @@ def extract(image_bytes, media_type):
             max_tokens=1024,
             system=_system_prompt(),
             tools=[_tool()],
-            tool_choice={"type": "tool", "name": "record_transaction"},
+            tool_choice={"type": "auto"},  # this model rejects forced tool_choice; the prompt tells it to always call the tool
             messages=[{
                 "role": "user",
                 "content": [
@@ -119,7 +134,8 @@ def extract(image_bytes, media_type):
         )
     except anthropic.AuthenticationError:
         raise ExtractError("API key ไม่ถูกต้อง กรุณาตรวจสอบไฟล์ .env หรือกรอกรายการเอง", 401)
-    except anthropic.BadRequestError:
+    except anthropic.BadRequestError as e:
+        print(f"[extract_receipt] BadRequest: {e.message}", file=sys.stderr)
         raise ExtractError("อ่านรูปนี้ไม่ได้ กรุณาลองรูปอื่นหรือกรอกเอง", 422)
     except anthropic.APIError:
         raise ExtractError("เชื่อมต่อ AI ไม่ได้ในขณะนี้ กรุณาลองใหม่หรือกรอกเอง", 502)

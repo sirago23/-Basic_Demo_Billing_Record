@@ -12,12 +12,13 @@ header { background: var(--accent); color: #fff; padding: 18px 40px; }
 h1 { margin: 0; font-size: 34px; }
 h2 { margin: 0 0 16px; font-size: 28px; }
 h3 { margin: 0 0 8px; font-size: 22px; text-align: center; }
-main { max-width: 1500px; margin: 0 auto; padding: 24px 32px 48px; display: grid; gap: 24px; }
+main { max-width: 1500px; margin: 0 auto; padding: 24px 32px 48px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+#table-section { overflow-x: auto; }
 .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 24px 28px; }
 .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
 .row h2 { margin: 0; }
 
-.add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.add-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
 .drop {
   display: flex; align-items: center; justify-content: center; text-align: center; flex-direction: column;
   min-height: 280px; border: 3px dashed var(--border); border-radius: 12px; cursor: pointer;
@@ -78,5 +79,5 @@ td.expense { color: var(--expense); font-weight: 600; }
 td:last-child { white-space: nowrap; text-align: right; }
 
 @media (max-width: 900px) {
-  .add-grid, .charts, .cards { grid-template-columns: 1fr; }
+  .add-grid, .charts, .cards { grid-template-columns: minmax(0, 1fr); }
 }

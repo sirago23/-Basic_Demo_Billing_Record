@@ -184,7 +184,7 @@ async function loadSummary() {
 
 function monthLabel(m) {
   const [y, mo] = m.split('-').map(Number);
-  return new Date(y, mo - 1, 1).toLocaleDateString('th-TH', { year: 'numeric', month: 'long' });
+  return new Date(y, mo - 1, 1).toLocaleDateString('th-TH-u-ca-gregory', { year: 'numeric', month: 'long' });
 }
 
 $('month').addEventListener('change', (e) => { month = e.target.value; refresh(); });
