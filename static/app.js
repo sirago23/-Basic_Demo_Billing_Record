@@ -5,7 +5,12 @@ const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#f59e0b', '#8b5cf6', '#0891b2'
 let categories = { expense: [], income: [] };
 let currentType = 'expense';
 let editingId = null;
-let month = '';
+const store = {
+  get() { try { return sessionStorage.getItem('month') || ''; } catch (_) { return ''; } },
+  set(v) { try { sessionStorage.setItem('month', v); } catch (_) {} },
+};
+let month = store.get();
+const onAdd = !!$('form'), onSummary = !!$('c-income'), onList = !!$('tbody');
 const charts = {};
 
 async function api(path, opts) {
@@ -66,6 +71,7 @@ function clearPreview() {
   $('file').value = '';
 }
 
+if (onAdd) {
 document.querySelectorAll('#type-toggle button').forEach((b) =>
   b.addEventListener('click', () => setType(b.dataset.type)));
 
@@ -73,6 +79,7 @@ $('cancel').addEventListener('click', () => { resetForm(); setStatus(''); });
 
 $('form').addEventListener('submit', async (e) => {
   e.preventDefault();
+  const wasEditing = !!editingId;
   const payload = {
     type: currentType,
     amount: parseFloat($('amount').value),
@@ -88,16 +95,18 @@ $('form').addEventListener('submit', async (e) => {
       await api('/api/transactions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     }
     usedSlip = false;
+    if (wasEditing) { location.href = '/list'; return; }
     resetForm();
     setStatus('บันทึกแล้ว', 'ok');
-    await refresh();
   } catch (err) {
     setStatus(err.message, 'error');
   }
 });
+}
+
+let usedSlip = false;
 
 /* ---------- slip upload ---------- */
-let usedSlip = false;
 
 async function handleFile(file) {
   if (!file) return;
@@ -129,12 +138,15 @@ async function handleFile(file) {
   }
 }
 
+if (onAdd) {
 const drop = $('drop');
 $('file').addEventListener('change', (e) => handleFile(e.target.files[0]));
 drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
 ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
 drop.addEventListener('drop', (e) => handleFile(e.dataTransfer.files[0]));
+}
+
 
 /* ---------- summary ---------- */
 function renderChart(id, rows) {
@@ -169,12 +181,13 @@ function renderChart(id, rows) {
 async function loadSummary() {
   const q = month ? `?month=${month}` : '';
   const s = await api(`/api/summary${q}`);
-  $('c-income').textContent = fmt.format(s.income);
-  $('c-expense').textContent = fmt.format(s.expense);
-  $('c-balance').textContent = fmt.format(s.balance);
-  renderChart('chart-expense', s.by_category.expense);
-  renderChart('chart-income', s.by_category.income);
-
+  if (onSummary) {
+    $('c-income').textContent = fmt.format(s.income);
+    $('c-expense').textContent = fmt.format(s.expense);
+    $('c-balance').textContent = fmt.format(s.balance);
+    renderChart('chart-expense', s.by_category.expense);
+    renderChart('chart-income', s.by_category.income);
+  }
   const sel = $('month');
   const options = [new Option('ทั้งหมด', '')].concat(s.months.map((m) => new Option(monthLabel(m), m)));
   if (month && !s.months.includes(month)) month = '';
@@ -187,7 +200,7 @@ function monthLabel(m) {
   return new Date(y, mo - 1, 1).toLocaleDateString('th-TH-u-ca-gregory', { year: 'numeric', month: 'long' });
 }
 
-$('month').addEventListener('change', (e) => { month = e.target.value; refresh(); });
+if ($('month')) $('month').addEventListener('change', (e) => { month = e.target.value; store.set(month); refresh(); });
 
 /* ---------- table ---------- */
 function cell(text, cls) {
@@ -225,6 +238,10 @@ async function loadTable() {
 }
 
 function startEdit(r) {
+  location.href = `/add?id=${r.id}`;
+}
+
+function loadEdit(r) {
   clearHighlights();
   clearPreview();
   usedSlip = false;
@@ -238,27 +255,32 @@ function startEdit(r) {
   $('submit').textContent = 'อัปเดต';
   $('cancel').hidden = false;
   setStatus('');
-  $('add-section').scrollIntoView({ behavior: 'smooth' });
 }
 
 async function remove(r) {
   if (!confirm(`ลบรายการ "${r.description || r.category}" จำนวน ${fmt.format(r.amount)} ใช่หรือไม่?`)) return;
   try {
     await api(`/api/transactions/${r.id}`, { method: 'DELETE' });
-    if (editingId === r.id) resetForm();
     await refresh();
   } catch (err) {
-    setStatus(err.message, 'error');
+    alert(err.message);
   }
 }
 
 async function refresh() {
-  await loadSummary();
-  await loadTable();
+  if (onSummary || onList) await loadSummary();
+  if (onList) await loadTable();
 }
 
 (async function init() {
-  categories = await api('/api/categories');
-  resetForm();
+  if (onAdd) {
+    categories = await api('/api/categories');
+    resetForm();
+    const id = Number(new URLSearchParams(location.search).get('id'));
+    if (id) {
+      const row = (await api('/api/transactions')).find((r) => r.id === id);
+      if (row) loadEdit(row); else setStatus('ไม่พบรายการที่ต้องการแก้ไข', 'error');
+    }
+  }
   await refresh();
 })();

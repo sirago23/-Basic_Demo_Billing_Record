@@ -102,4 +102,14 @@ def index():
     return FileResponse(BASE / "static" / "index.html")
 
 
+@app.get("/add")
+def add_page():
+    return FileResponse(BASE / "static" / "add.html")
+
+
+@app.get("/list")
+def list_page():
+    return FileResponse(BASE / "static" / "list.html")
+
+
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
