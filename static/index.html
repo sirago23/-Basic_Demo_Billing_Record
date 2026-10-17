@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>บันทึกรายรับ-รายจ่าย</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <header><h1>บันทึกรายรับ-รายจ่าย</h1></header>
+  <main>
+    <section class="panel" id="add-section">
+      <h2 id="form-title">เพิ่มรายการ</h2>
+      <div class="add-grid">
+        <div>
+          <label class="drop" id="drop" tabindex="0">
+            <input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden>
+            <img id="preview" alt="" hidden>
+            <span id="drop-text">ลากสลิป/ใบเสร็จมาวาง หรือคลิกเพื่อเลือกรูป<br><small>JPG, PNG, WEBP ไม่เกิน 5MB</small></span>
+          </label>
+          <div id="status" role="status"></div>
+        </div>
+        <form id="form" autocomplete="off">
+          <div class="toggle" id="type-toggle">
+            <button type="button" data-type="expense" class="active">รายจ่าย</button>
+            <button type="button" data-type="income">รายรับ</button>
+          </div>
+          <label>จำนวนเงิน (บาท)<input type="number" id="amount" step="0.01" min="0.01" required></label>
+          <label>หมวดหมู่<select id="category" required></select></label>
+          <label>วันที่<input type="date" id="date" required></label>
+          <label>รายละเอียด<input type="text" id="description" maxlength="200"></label>
+          <div class="actions">
+            <button type="submit" id="submit" class="primary">บันทึก</button>
+            <button type="button" id="cancel" class="secondary" hidden>ยกเลิกการแก้ไข</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" id="summary-section">
+      <div class="row">
+        <h2>สรุป</h2>
+        <select id="month"></select>
+      </div>
+      <div class="cards">
+        <div class="card income"><span>รายรับรวม</span><b id="c-income">฿0.00</b></div>
+        <div class="card expense"><span>รายจ่ายรวม</span><b id="c-expense">฿0.00</b></div>
+        <div class="card balance"><span>คงเหลือ</span><b id="c-balance">฿0.00</b></div>
+      </div>
+      <div class="charts">
+        <div><h3>รายจ่ายตามหมวด</h3><div class="chart-box"><canvas id="chart-expense"></canvas><p class="empty" hidden>ไม่มีข้อมูล</p></div></div>
+        <div><h3>รายรับตามหมวด</h3><div class="chart-box"><canvas id="chart-income"></canvas><p class="empty" hidden>ไม่มีข้อมูล</p></div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="table-section">
+      <h2>รายการ</h2>
+      <table>
+        <thead><tr><th>วันที่</th><th>ประเภท</th><th>หมวด</th><th>รายละเอียด</th><th class="num">จำนวนเงิน</th><th></th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <p class="empty" id="table-empty" hidden>ยังไม่มีรายการ</p>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

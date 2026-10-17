@@ -1,0 +1,1498 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<title>แอปบันทึกรายรับ-รายจ่าย (เดโมสด)</title>
+<style>
+:root {
+  --bg: #eef1f6;
+  --surface: #ffffff;
+  --text: #0f1729;
+  --muted: #54607a;
+  --line: #e2e6ee;
+  --accent: #2453c8;
+  --accent-text: #ffffff;
+  --accent-soft: #e9effd;
+  --card: #f4f6fb;
+  --hi: #b8232c;
+  --med: #a14f00;
+  --lo: #1d7148;
+  --hi-bg: #fdecec;
+  --med-bg: #fdf1e3;
+  --lo-bg: #e6f5ec;
+  --fs-title: clamp(1.5rem, 1rem + 1.5vw, 2.75rem);
+  --fs-body: clamp(1rem, 0.85rem + 0.44vw, 1.375rem);
+  --fs-small: clamp(0.875rem, 0.8rem + 0.15vw, 1.125rem);
+  --gap: clamp(16px, 1.2vw, 24px);
+  --pad: clamp(16px, 2.5vw, 48px);
+  --radius: 12px;
+  --radius-slide: 14px;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #080b12;
+    --surface: #0e1320;
+    --text: #f3f5fa;
+    --muted: #a8b1c5;
+    --line: #263049;
+    --accent: #84abff;
+    --accent-text: #080b12;
+    --accent-soft: #1b2747;
+    --card: #161d2e;
+    --hi: #ff9c9c;
+    --med: #ffc27a;
+    --lo: #80e0aa;
+    --hi-bg: #3a1a20;
+    --med-bg: #3a2a16;
+    --lo-bg: #163325;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #080b12;
+  --surface: #0e1320;
+  --text: #f3f5fa;
+  --muted: #a8b1c5;
+  --line: #263049;
+  --accent: #84abff;
+  --accent-text: #080b12;
+  --accent-soft: #1b2747;
+  --card: #161d2e;
+  --hi: #ff9c9c;
+  --med: #ffc27a;
+  --lo: #80e0aa;
+  --hi-bg: #3a1a20;
+  --med-bg: #3a2a16;
+  --lo-bg: #163325;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-body);
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
+  margin: 0 0 var(--gap);
+}
+
+h1,
+h2 {
+  font-size: var(--fs-title);
+  font-weight: 750;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+h3 {
+  font-size: var(--fs-body);
+}
+
+p {
+  margin: 0 0 var(--gap);
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px var(--gap);
+  padding: 10px var(--gap);
+  background: var(--bg);
+  font-size: var(--fs-small);
+}
+
+.bar .count {
+  color: var(--muted);
+}
+
+.bar .nav {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  font: inherit;
+  font-size: var(--fs-small);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 16px;
+  min-height: 36px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+.bar .nav {
+  align-items: center;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
+  border: 0;
+  background: transparent;
+}
+
+html:not(.js) .switch {
+  display: none;
+}
+
+.switch-track {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--muted);
+  transition: background 0.15s;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface);
+  transition: transform 0.15s;
+}
+
+.switch[aria-checked="true"] .switch-track {
+  background: var(--accent);
+}
+
+.switch[aria-checked="true"] .switch-knob {
+  transform: translateX(20px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .switch-track,
+  .switch-knob {
+    transition: none;
+  }
+}
+
+.toc {
+  position: relative;
+}
+
+.toc summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 6px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.toc summary:hover {
+  border-color: var(--accent);
+}
+
+.toc ol {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  z-index: 6;
+  margin: 4px 0 0;
+  padding: 8px 8px 8px 32px;
+  width: min(320px, calc(100vw - 2 * var(--gap)));
+  max-height: 70vh;
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+.toc a {
+  display: block;
+  padding: 4px 0;
+  color: var(--accent);
+}
+
+#deck {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: var(--gap);
+}
+
+.slide {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-slide);
+  box-shadow: 0 12px 40px -16px color-mix(in srgb, var(--text) 28%, transparent);
+  padding: 24px var(--pad);
+  margin-bottom: 0;
+  scroll-margin-top: 80px;
+}
+
+/* On a desktop window the page never scrolls: the bar stays put and a slide that is too tall
+   scrolls inside its own frame. On a phone the page scrolls as usual. */
+@media (min-width: 720px) {
+  .js body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  .js .bar {
+    flex: none;
+  }
+
+  .js #deck {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .js .slide.active {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}
+
+.js .slide:not(.active) {
+  display: none;
+}
+
+.src {
+  margin: var(--gap) 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+th.src,
+td.src {
+  margin: 0;
+  width: 14%;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.path {
+  display: inline-block;
+  min-width: 7em;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 719px) {
+  #deck {
+    padding: 8px;
+  }
+
+  .slide {
+    padding: 20px 12px;
+  }
+
+  th,
+  td {
+    padding: 6px 4px;
+  }
+
+  .src,
+  .task .src,
+  .risk .src {
+    font-size: 0.6875rem;
+  }
+
+  th.src,
+  td.src {
+    width: 22%;
+    min-width: 5.5em;
+    font-size: 0.6875rem;
+  }
+}
+
+.card h3 {
+  margin: 0;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.card ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .steps {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.step .id {
+  padding: 2px 10px;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.step strong {
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.step span:not(.id):not(.src) {
+  color: var(--muted);
+  font-size: var(--fs-small);
+}
+
+.step .src {
+  margin: 0;
+}
+
+table + h3,
+.rows + h3 {
+  margin-top: calc(var(--gap) * 1.5);
+}
+
+h3 + .rows {
+  margin-top: 12px;
+}
+
+td ul {
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.impact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.impact::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.impact-high {
+  color: var(--hi);
+  background: var(--hi-bg);
+}
+
+.impact-med {
+  color: var(--med);
+  background: var(--med-bg);
+}
+
+.impact-low {
+  color: var(--lo);
+  background: var(--lo-bg);
+}
+
+.wireframes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+}
+
+@media (min-width: 720px) {
+  .wireframes {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.wireframe {
+  margin: 0;
+  padding: var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.wireframe figcaption {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.wf-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 2px dashed var(--muted);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--line) 35%, transparent);
+  font-size: var(--fs-small);
+}
+
+.wf-note {
+  margin: 8px 0 0;
+  font-size: var(--fs-small);
+  font-style: italic;
+  color: var(--muted);
+}
+
+.wf-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.wf-header {
+  font-weight: 700;
+  background: var(--line);
+}
+
+.wf-button {
+  justify-content: center;
+  align-self: flex-start;
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.wf-image {
+  min-height: 90px;
+  align-items: center;
+  justify-content: center;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--surface),
+    var(--surface) 10px,
+    var(--line) 10px,
+    var(--line) 11px
+  );
+}
+
+.wf-item {
+  flex: 1 1 5em;
+  padding: 8px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  text-align: center;
+}
+
+.wf-field {
+  flex: 1 1 100%;
+  padding: 8px;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  color: var(--muted);
+}
+
+.wf-caption {
+  flex: 1 1 100%;
+  font-weight: 600;
+}
+
+.wf-line {
+  flex: 1 1 100%;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--line);
+}
+
+.wf-bars {
+  display: flex;
+  flex: 1 1 100%;
+  align-items: flex-end;
+  gap: 6px;
+  height: 70px;
+}
+
+.wf-bars i {
+  flex: 1;
+  background: var(--muted);
+  border-radius: 2px 2px 0 0;
+}
+
+.design {
+  margin: 0;
+}
+
+.design img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+}
+
+.design figcaption {
+  margin-top: 8px;
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.diagram .mermaid {
+  margin: 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.diagram .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* On a desktop window a tall diagram is scaled down to the window instead of scrolling. */
+@media (min-width: 720px) {
+  .js .diagram .mermaid svg {
+    max-height: calc(100dvh - 245px);
+  }
+}
+
+html:not(.js) .diagram .mermaid,
+.js .diagram:not([data-state]) .mermaid,
+.js .diagram[data-state="failed"] .mermaid,
+.diagram .mermaid-print {
+  display: none;
+}
+
+.js .diagram:not([data-state])::before {
+  content: "Drawing the diagram...";
+  display: block;
+  color: var(--muted);
+}
+
+html:not(.js) .diagram-fallback[hidden] {
+  display: block;
+}
+
+.tagline {
+  max-width: 40ch;
+  color: var(--muted);
+}
+
+/* The title slide: the one place with a glow and the one place with a huge project name. */
+#s-title {
+  background: radial-gradient(ellipse at 88% 8%, var(--accent-soft), transparent 60%),
+    var(--surface);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+#s-title h1 {
+  margin: var(--gap) 0;
+  font-size: clamp(2rem, 1rem + 4.5vw, 5.25rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+  overflow-wrap: break-word;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--gap);
+  margin: calc(var(--gap) * 1.5) 0 0;
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+  padding: var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.stat b {
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.75rem);
+  font-weight: 750;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.stat span {
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.by {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px var(--gap);
+  margin-top: calc(var(--gap) * 2);
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.files {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 719px) {
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Text-only slides. Launch stage: very short text, centred, in the deck's own colours with a soft
+   glow like the title slide's. Split stage: longer text, an accent panel on the left and one row per paragraph. */
+.slide:has(> .stage) {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.stage {
+  flex: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  font-size: var(--fs-small);
+  font-weight: 650;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stage .src {
+  margin: auto 0 0;
+}
+
+.stage.launch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  padding: calc(var(--pad) * 1.3) var(--pad) var(--pad);
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, var(--accent-soft), transparent 65%),
+    var(--surface);
+}
+
+.stage.launch > :first-child {
+  margin-top: auto; /* with the source's auto margin, centres the text between top and bottom */
+}
+
+.stage.launch .eyebrow {
+  color: var(--accent);
+}
+
+.stage.launch h2 {
+  max-width: 16ch;
+  margin: 0;
+  font-size: clamp(2.25rem, 1.2rem + 3.2vw, 4rem);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.stage.launch .rule {
+  width: 56px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.stage.launch .lines {
+  display: grid;
+  gap: 14px;
+  max-width: 46ch;
+}
+
+.stage.launch .lines p {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.stage.launch .lines p:first-child {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.stage.launch .src {
+  color: var(--muted);
+}
+
+.stage.split {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+}
+
+.stage.split .panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding: calc(var(--pad) * 1.2) var(--pad);
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.stage.split .panel h2 {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 750;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.stage.split .panel .src {
+  color: var(--accent-text);
+}
+
+.points {
+  display: grid;
+  align-content: center;
+  margin: 0;
+  padding: calc(var(--pad) * 0.8) var(--pad);
+  list-style: none;
+}
+
+.points li {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr);
+  gap: var(--gap);
+  padding: var(--gap) 0;
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-body);
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.points li:first-child {
+  border-top: 0;
+}
+
+.points li::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  margin-top: 0.4em;
+  border-radius: 50%;
+  background: var(--accent);
+  outline: 5px solid var(--accent-soft);
+}
+
+.points strong {
+  font-weight: 650;
+  color: var(--text);
+}
+
+@media (max-width: 719px) {
+  .stage.split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stage.split .panel,
+  .points {
+    padding: 24px 16px;
+  }
+
+  .stage.launch {
+    padding: 32px 16px 20px;
+  }
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--gap);
+}
+
+@media (min-width: 720px) {
+  .slide {
+    padding: calc(var(--pad) * 0.75) var(--pad);
+  }
+
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.card .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.card .id {
+  padding: 2px 8px;
+  font-size: var(--fs-small);
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+}
+
+.card .as {
+  font-size: var(--fs-small);
+  color: var(--muted);
+}
+
+.card p {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.38;
+}
+
+.card p.src {
+  margin: 0;
+  font-weight: 400;
+}
+
+.rows {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.risk,
+.task {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 14%;
+  gap: 4px var(--gap);
+  align-items: start;
+  padding: 14px var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.risk .impact {
+  justify-self: start;
+  font-size: var(--fs-small);
+}
+
+.task {
+  grid-template-columns: minmax(0, 1fr) 14%;
+  grid-template-rows: auto 1fr;
+}
+
+.task strong,
+.risk strong {
+  display: block;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.task .how,
+.risk .how {
+  display: block;
+  margin-top: 4px;
+  font-size: var(--fs-small);
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.task .src,
+.risk .src {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.task strong,
+.task .how {
+  grid-column: 1;
+}
+
+.task .src {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+@media (max-width: 719px) {
+  .risk,
+  .task {
+    grid-template-columns: 1fr;
+  }
+
+  .task strong,
+  .task .how,
+  .task .src {
+    grid-column: auto;
+    grid-row: auto;
+  }
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
+}
+
+th,
+td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+table.grouped tr.group-start td {
+  border-top: 2px solid var(--line);
+}
+
+table.grouped td[rowspan] {
+  min-width: 6em;
+  font-weight: 600;
+}
+
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checks li {
+  margin-bottom: 8px;
+  padding: 10px var(--gap);
+  background: var(--card);
+  border-radius: var(--radius);
+}
+
+.checks label {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+
+.checks input {
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  flex: none;
+  accent-color: var(--accent);
+}
+
+@media print {
+  /* Print is always light, whatever theme the screen is in. */
+  :root,
+  :root[data-theme="dark"],
+  :root:not([data-theme="light"]) {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --text: #0f1729;
+    --muted: #54607a;
+    --line: #e2e6ee;
+    --accent: #2453c8;
+    --accent-text: #ffffff;
+    --accent-soft: #e9effd;
+    --card: #f4f6fb;
+    --hi: #b8232c;
+    --med: #a14f00;
+    --lo: #1d7148;
+    --hi-bg: #fdecec;
+    --med-bg: #fdf1e3;
+    --lo-bg: #e6f5ec;
+  }
+
+  .diagram .mermaid {
+    display: none !important;
+  }
+
+  .diagram[data-state="drawn"] .mermaid-print {
+    display: block;
+    text-align: center;
+  }
+
+  .mermaid-print svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .bar {
+    display: none;
+  }
+
+  body,
+  .js body {
+    display: block;
+    height: auto;
+    overflow: visible;
+    background: var(--bg);
+    color: var(--text);
+  }
+
+  #deck,
+  .js #deck {
+    display: block;
+    max-width: none;
+    padding: 0;
+  }
+
+  #s-title,
+  .stage.launch {
+    background: none;
+  }
+
+  .stage.split .panel {
+    color: var(--text);
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+  }
+
+  .stage.split .panel .src {
+    color: var(--muted);
+  }
+
+  .stat,
+  .pill,
+  .card,
+  .wireframe,
+  .risk,
+  .task,
+  .step,
+  .checks li {
+    border: 1px solid var(--line);
+  }
+
+  .js .slide:not(.active),
+  .js .slide.active,
+  .slide {
+    display: block;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+}
+
+</style>
+</head>
+<body>
+<header class="bar">
+  <details class="toc">
+    <summary>Contents</summary>
+    <ol>
+      <li><a href="#s-title">Overview</a></li>
+      <li><a href="#s-goal">The goal</a></li>
+      <li><a href="#s-screens">Example screens</a></li>
+      <li><a href="#s-screens-2">Example screens (continued)</a></li>
+      <li><a href="#s-architecture">ส่วนประกอบของระบบ (แบบย่อ)</a></li>
+      <li><a href="#s-flow">ขั้นตอนเมื่ออัปโหลดสลิป (แบบย่อ)</a></li>
+      <li><a href="#s-data">What information it keeps</a></li>
+      <li><a href="#s-stack">Building blocks</a></li>
+      <li><a href="#s-phases">Delivery phases</a></li>
+      <li><a href="#s-tasks">Tasks by phase</a></li>
+      <li><a href="#s-tasks-2">Tasks by phase (continued)</a></li>
+      <li><a href="#s-checkpoints">Checkpoints you approve</a></li>
+      <li><a href="#s-decisions">Decisions already made</a></li>
+      <li><a href="#s-decisions-2">Decisions already made (continued)</a></li>
+      <li><a href="#s-out-of-scope">Not included</a></li>
+      <li><a href="#s-notes">เมื่อเกิดข้อผิดพลาด</a></li>
+      <li><a href="#s-notes-2">การรีเฟรชหน้าจอ</a></li>
+      <li><a href="#s-notes-3">ระบบรับส่งข้อมูลของแอป</a></li>
+      <li><a href="#s-check">Please check</a></li>
+    </ol>
+  </details>
+  <span class="count" id="count" aria-live="polite"></span>
+  <div class="nav">
+    <button type="button" id="prev">Previous</button>
+    <button type="button" id="next">Next</button>
+    <button type="button" id="theme" class="switch" role="switch" aria-checked="false">
+      <span class="switch-label">Dark mode</span>
+      <span class="switch-track" aria-hidden="true"><span class="switch-knob"></span></span>
+    </button>
+  </div>
+</header>
+<main id="deck">
+<section class="slide" id="s-title"><span class="pill">Executive summary</span><h1>แอปบันทึกรายรับ-รายจ่าย (เดโมสด)</h1><p class="tagline">อัปโหลดสลิปหรือใบเสร็จ ให้ AI อ่านค่า แล้วดูสรุปเป็นแผนภูมิ</p><div class="stats"><div class="stat"><b>1</b><span>delivery phase</span></div><div class="stat"><b>5</b><span>tasks</span></div><div class="stat"><b>1</b><span>checkpoint you approve</span></div></div><footer class="by"><ul class="files"><li><span class="path">plan.md</span> · last changed 2026-10-17 · contains goal, decisions, stack, data, screens, phases, checks, out_of_scope</li></ul><span>2026-10-17</span></footer></section>
+<section class="slide" id="s-goal"><div class="stage split"><div class="panel"><span class="eyebrow">Context</span><h2>The goal</h2><p class="src">Source: plan.md &gt; Context</p></div><ul class="points"><li><span><strong>เว็บแอปสำหรับบันทึกรายรับและรายจ่าย ใช้คนเดียว รันบนเครื่องของคุณเอง เพื่อโชว์ในเดโมสด ตั้งเป้าสร้างให้เสร็จใน 2-3 ชั่วโมง</strong></span></li><li><span><strong>คุณอัปโหลดสลิปธนาคารหรือใบเสร็จ (รูป JPG/PNG) แล้ว AI จะอ่านค่าและจัดหมวดหมู่ให้ จากนั้นแสดงฟอร์มให้คุณตรวจและแก้ไขก่อนกดบันทึก</strong></span></li><li><span><strong>คุณกรอกรายการเองได้ด้วย</strong></span></li><li><span><strong>หน้าสรุปมีแผนภูมิวงกลม 2 วง (รายจ่ายตามหมวด และรายรับตามหมวด) และการ์ด รายรับรวม / รายจ่ายรวม / คงเหลือ เลือกดูรายเดือนหรือทั้งหมดได้</strong></span></li><li><span><strong>มีตารางรายการที่แก้ไขและลบได้ โฟลเดอร์โปรเจกต์ตอนนี้ยังว่าง ไม่มีโค้ดเดิมให้ใช้ต่อ</strong></span></li></ul></div></section>
+<section class="slide" id="s-screens"><h2>Example screens</h2><div class="wireframes"><figure class="wireframe"><figcaption>เพิ่มรายการ</figcaption><div class="wf-screen"><div class="wf-block wf-header">เพิ่มรายการ</div><div class="wf-block wf-image">โซนลากวาง/เลือกรูป พร้อมพรีวิว</div><div class="wf-block wf-text"><span class="wf-caption">กำลังอ่านสลิป...</span><span class="wf-line"></span><span class="wf-line"></span></div><div class="wf-block wf-form"><span class="wf-field">รายรับ/รายจ่าย</span><span class="wf-field">จำนวนเงิน</span><span class="wf-field">หมวด</span><span class="wf-field">วันที่</span><span class="wf-field">รายละเอียด</span></div><div class="wf-block wf-button">บันทึก</div></div><p class="wf-note">Example layout, not the final design</p></figure><figure class="wireframe"><figcaption>สรุป</figcaption><div class="wf-screen"><div class="wf-block wf-header">สรุป</div><div class="wf-block wf-nav"><span class="wf-item">เลือกเดือน (ทั้งหมด + เดือนที่มีข้อมูล)</span></div><div class="wf-block wf-stats"><span class="wf-item">รายรับรวม / รายจ่ายรวม / คงเหลือ</span></div><div class="wf-block wf-chart"><span class="wf-caption">แผนภูมิวงกลมรายจ่ายตามหมวด</span><span class="wf-bars"><i style="height:45%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:85%"></i><i style="height:60%"></i></span></div><div class="wf-block wf-chart"><span class="wf-caption">แผนภูมิวงกลมรายรับตามหมวด</span><span class="wf-bars"><i style="height:45%"></i><i style="height:70%"></i><i style="height:55%"></i><i style="height:85%"></i><i style="height:60%"></i></span></div></div><p class="wf-note">Example layout, not the final design</p></figure></div><p class="src">Source: plan.md &gt; หน้าเว็บ (`static/`)</p><p class="src">Source: plan.md &gt; หน้าเว็บ (`static/`)</p></section>
+<section class="slide" id="s-screens-2"><h2>Example screens (continued)</h2><div class="wireframes"><figure class="wireframe"><figcaption>ตารางรายการ</figcaption><div class="wf-screen"><div class="wf-block wf-header">ตารางรายการ</div><div class="wf-block wf-list"><span class="wf-caption">รายการของเดือนที่เลือก</span><span class="wf-line"></span><span class="wf-line"></span><span class="wf-line"></span></div><div class="wf-block wf-button">แก้ไข (เปลี่ยนเป็น อัปเดต)</div><div class="wf-block wf-button">ลบ (มีให้ยืนยันก่อน)</div></div><p class="wf-note">Example layout, not the final design</p></figure></div><p class="src">Source: plan.md &gt; หน้าเว็บ (`static/`)</p></section>
+<section class="slide" id="s-architecture"><h2>ส่วนประกอบของระบบ (แบบย่อ)</h2><div class="diagram"><pre class="mermaid">flowchart TB
+  n_you[&quot;คุณ&quot;]
+  n_web[&quot;หน้าเว็บหน้าเดียว&quot;]
+  n_server[&quot;ตัวแอป (รับคำสั่งจากหน้าเว็บ)&quot;]
+  n_db[&quot;ที่เก็บรายการ (ไฟล์ฐานข้อมูล)&quot;]
+  n_ai[&quot;Claude AI (อ่านรูปสลิป)&quot;]
+  n_you --&gt;|&quot;ใช้งาน&quot;| n_web
+  n_web --&gt;|&quot;ส่งรูปและรายการ&quot;| n_server
+  n_server --&gt;|&quot;บันทึก/ดึงรายการ&quot;| n_db
+  n_server --&gt;|&quot;ส่งรูปให้อ่าน&quot;| n_ai</pre><div class="mermaid-print" aria-hidden="true"></div><div class="diagram-fallback" hidden><p>The picture could not be drawn here. The same information as a list:</p><p>Parts: คุณ, หน้าเว็บหน้าเดียว, ตัวแอป (รับคำสั่งจากหน้าเว็บ), ที่เก็บรายการ (ไฟล์ฐานข้อมูล), Claude AI (อ่านรูปสลิป)</p><table><thead><tr><th>From</th><th>To</th><th>What happens</th></tr></thead><tbody><tr><td>คุณ</td><td>หน้าเว็บหน้าเดียว</td><td>ใช้งาน</td></tr><tr><td>หน้าเว็บหน้าเดียว</td><td>ตัวแอป (รับคำสั่งจากหน้าเว็บ)</td><td>ส่งรูปและรายการ</td></tr><tr><td>ตัวแอป (รับคำสั่งจากหน้าเว็บ)</td><td>ที่เก็บรายการ (ไฟล์ฐานข้อมูล)</td><td>บันทึก/ดึงรายการ</td></tr><tr><td>ตัวแอป (รับคำสั่งจากหน้าเว็บ)</td><td>Claude AI (อ่านรูปสลิป)</td><td>ส่งรูปให้อ่าน</td></tr></tbody></table></div></div><p class="src">Source: plan.md &gt; สิ่งที่ตกลงกันแล้ว</p></section>
+<section class="slide" id="s-flow"><h2>ขั้นตอนเมื่ออัปโหลดสลิป (แบบย่อ)</h2><div class="diagram"><pre class="mermaid">flowchart LR
+  n_up[&quot;อัปโหลดรูปสลิป&quot;]
+  n_read[&quot;AI อ่านค่าและจัดหมวด&quot;]
+  n_check[&quot;ตรวจผลอีกรอบ&quot;]
+  n_form[&quot;ใส่ค่าลงฟอร์ม (ยังไม่บันทึก)&quot;]
+  n_review[&quot;คุณตรวจและแก้ไข&quot;]
+  n_save[&quot;กดบันทึก&quot;]
+  n_show[&quot;สรุปและตารางอัปเดต&quot;]
+  n_up --&gt; n_read
+  n_read --&gt; n_check
+  n_check --&gt; n_form
+  n_form --&gt; n_review
+  n_review --&gt; n_save
+  n_save --&gt; n_show</pre><div class="mermaid-print" aria-hidden="true"></div><div class="diagram-fallback" hidden><p>The picture could not be drawn here. The same information as a list:</p><p>Parts: อัปโหลดรูปสลิป, AI อ่านค่าและจัดหมวด, ตรวจผลอีกรอบ, ใส่ค่าลงฟอร์ม (ยังไม่บันทึก), คุณตรวจและแก้ไข, กดบันทึก, สรุปและตารางอัปเดต</p><table><thead><tr><th>From</th><th>To</th><th>What happens</th></tr></thead><tbody><tr><td>อัปโหลดรูปสลิป</td><td>AI อ่านค่าและจัดหมวด</td><td></td></tr><tr><td>AI อ่านค่าและจัดหมวด</td><td>ตรวจผลอีกรอบ</td><td></td></tr><tr><td>ตรวจผลอีกรอบ</td><td>ใส่ค่าลงฟอร์ม (ยังไม่บันทึก)</td><td></td></tr><tr><td>ใส่ค่าลงฟอร์ม (ยังไม่บันทึก)</td><td>คุณตรวจและแก้ไข</td><td></td></tr><tr><td>คุณตรวจและแก้ไข</td><td>กดบันทึก</td><td></td></tr><tr><td>กดบันทึก</td><td>สรุปและตารางอัปเดต</td><td></td></tr></tbody></table></div></div><p class="src">Source: plan.md &gt; การอ่านสลิป (`tools/extract_receipt.py`)</p></section>
+<section class="slide" id="s-data"><h2>What information it keeps</h2><table><thead><tr><th>Item</th><th>What it is</th><th>Details</th><th class="src">Source</th></tr></thead><tbody><tr><td>รายการรายรับ-รายจ่าย</td><td>แต่ละรายการเก็บว่าเป็นรายรับหรือรายจ่าย จำนวนเงิน หมวดหมู่ วันที่ รายละเอียด ที่มา (จากสลิปหรือกรอกเอง) และเวลาที่สร้าง ระบบหาผลรวมรายรับ รายจ่าย คงเหลือ ยอดแยกตามหมวด และรายการเดือนที่มีข้อมูลได้</td><td>ประเภท (รายรับ/รายจ่าย), จำนวนเงิน, หมวดหมู่, วันที่, รายละเอียด, ที่มา (สลิป/กรอกเอง), เวลาที่สร้าง</td><td class="src">plan.md &gt; ฐานข้อมูล (`tools/db.py`)</td></tr></tbody></table></section>
+<section class="slide" id="s-stack"><h2>Building blocks</h2><table><thead><tr><th>Part</th><th>Choice</th><th>What it means</th><th class="src">Source</th></tr></thead><tbody><tr><td>AI</td><td>Claude API (claude-sonnet-5-5)</td><td>โปรแกรม AI ที่อ่านรูปสลิปและตอบกลับเป็นข้อมูลตามรูปแบบที่กำหนด</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>ตัวแอปและหน้าเว็บ</td><td>Python FastAPI + HTML/JS ล้วน + Chart.js</td><td>FastAPI คือชุดเครื่องมือสำเร็จรูปสำหรับสร้างตัวแอปด้วย Python ส่วนหน้าเว็บเขียนแบบเรียบง่าย และใช้ Chart.js วาดแผนภูมิ ไม่มีขั้นตอน build (แปลงโค้ดเป็นแอปสำเร็จ)</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>ที่เก็บข้อมูล</td><td>SQLite</td><td>ฐานข้อมูลที่เก็บอยู่ในไฟล์เดียวบนเครื่องของคุณ</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>การตรวจข้อมูล</td><td>Pydantic</td><td>ตัวตรวจว่าข้อมูลถูกต้อง เช่น จำนวนเงินต้องมากกว่า 0 และหมวดต้องอยู่ในรายการของประเภทนั้น</td><td class="src">plan.md &gt; API (`app.py`)</td></tr><tr><td>ฟอนต์และการแสดงเงิน</td><td>Sarabun / Noto Sans Thai</td><td>แสดงจำนวนเงินแบบ ฿1,234.00 และใช้ฟอนต์ไทยจาก Google Fonts</td><td class="src">plan.md &gt; หน้าเว็บ (`static/`)</td></tr></tbody></table></section>
+<section class="slide" id="s-phases"><h2>Delivery phases</h2><ol class="steps"><li class="step"><span class="id">P1</span><strong>ลำดับการสร้าง (ประมาณ 2-2.5 ชั่วโมง)</strong><span>สร้างแอปทีละขั้น ตามลำดับ 5 ขั้น</span><span class="src">Source: plan.md &gt; ลำดับการสร้าง (~2-2.5 ชม.)</span></li></ol></section>
+<section class="slide" id="s-tasks"><h2>Tasks by phase</h2><h3>ลำดับการสร้าง (ประมาณ 2-2.5 ชั่วโมง)</h3><ul class="rows"><li class="task"><strong>ตั้งโครงโปรเจกต์ รายการหมวดหมู่ และฐานข้อมูล (20 นาที)</strong><span class="how">โครงโปรเจกต์พร้อม ที่เก็บข้อมูลและรายการหมวดหมู่</span><span class="src">plan.md &gt; ลำดับการสร้าง (~2-2.5 ชม.)</span></li><li class="task"><strong>ตัวแอป: เพิ่ม/แก้/ลบรายการ และสรุป แล้วทดสอบ (20 นาที)</strong><span class="how">ทดลองสั่งงานผ่านหน้าทดสอบที่ระบบมีให้</span><span class="src">plan.md &gt; ลำดับการสร้าง (~2-2.5 ชม.)</span></li><li class="task"><strong>ส่วนอ่านสลิปด้วย AI ทดสอบด้วยสลิปจริง 1-2 ใบ (30 นาที)</strong><span class="how">ผลการอ่านสลิปจริง 1-2 ใบ</span><span class="src">plan.md &gt; ลำดับการสร้าง (~2-2.5 ชม.)</span></li><li class="task"><strong>หน้าเว็บ: ฟอร์ม ตาราง และแผนภูมิ (50 นาที)</strong><span class="how">หน้าเว็บที่ใช้งานได้ครบ 3 ส่วน</span><span class="src">plan.md &gt; ลำดับการสร้าง (~2-2.5 ชม.)</span></li></ul></section>
+<section class="slide" id="s-tasks-2"><h2>Tasks by phase (continued)</h2><h3>ลำดับการสร้าง (ประมาณ 2-2.5 ชั่วโมง) (continued)</h3><ul class="rows"><li class="task"><strong>ข้อมูลตัวอย่าง ตัวล้างข้อมูล คู่มือ และขัดเกลา (20 นาที)</strong><span class="how">ข้อมูลตัวอย่างพร้อมโชว์ และคู่มือติดตั้ง รัน และขั้นตอนเดโม</span><span class="src">plan.md &gt; ลำดับการสร้าง (~2-2.5 ชม.)</span></li></ul></section>
+<section class="slide" id="s-checkpoints"><h2>Checkpoints you approve</h2><div class="cards"><div class="card"><h3>การตรวจสอบก่อนใช้เดโม</h3><span class="as">P1</span><ul><li>ใส่ข้อมูลตัวอย่าง แล้วเปิดหน้าเว็บ ต้องเห็นการ์ด แผนภูมิ 2 วง และตารางครบ</li><li>สลับเดือน ตัวเลขในการ์ด แผนภูมิ และตารางต้องเปลี่ยนตาม และรวมกันได้เท่ากับยอด &quot;ทั้งหมด&quot;</li><li>กรอกเอง เพิ่ม แก้ และลบรายการ ส่วนสรุปต้องอัปเดตทันที</li><li>ทดสอบอ่านสลิปโอนออก สลิปรับโอน และใบเสร็จร้านค้า แต่ละใบต้องได้ประเภท ยอดเงิน วันที่ (ค.ศ.) และหมวดที่ถูกต้อง (ใช้ AI จริง ค่าใช้จ่ายราว 1 บาทต่อใบ)</li><li>อัปโหลดสลิปผ่านหน้าเว็บ ค่าต้องขึ้นในฟอร์มโดยยังไม่บันทึก จากนั้นกดบันทึกแล้วรายการต้องปรากฏในตาราง</li><li>ทดสอบกรณีผิดพลาด (ไม่มีกุญแจเชื่อมต่อ AI หรืออัปโหลดรูปที่ไม่ใช่สลิป) ต้องมีข้อความภาษาไทยแจ้ง และแอปต้องไม่พัง</li><li>ถ่ายภาพหน้าจอที่ความกว้าง 1920px เพื่อดูความเรียบร้อย</li></ul><p class="src">Source: plan.md &gt; การตรวจสอบ</p></div></div></section>
+<section class="slide" id="s-decisions"><h2>Decisions already made</h2><table><thead><tr><th>Decision</th><th class="src">Source</th></tr></thead><tbody><tr><td>หลังอ่านสลิป ให้ใส่ค่าลงฟอร์มให้ตรวจก่อน แล้วค่อยบันทึก</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>หมวดหมู่เป็นรายการตายตัว AI ต้องเลือกจากรายการนี้เท่านั้น</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>หมวดรายจ่าย: อาหาร/เครื่องดื่ม, เดินทาง, ช้อปปิ้ง, บิล/สาธารณูปโภค, ที่พัก, สุขภาพ, บันเทิง, โอนเงิน, อื่นๆ</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>หมวดรายรับ: เงินเดือน, งานฟรีแลนซ์, รับโอน, ขายของ, อื่นๆ</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>แยกเงินเข้า/ออกโดยเทียบกับชื่อของคุณที่ตั้งไว้ในไฟล์ตั้งค่า: ถ้าคุณเป็นผู้รับ = รายรับ, ถ้าคุณเป็นผู้โอน = รายจ่าย, ใบเสร็จร้านค้า = รายจ่าย</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>หน้าจอเป็นภาษาไทย หน้าเดียว ตัวอักษรใหญ่ เหมาะกับฉายโปรเจกเตอร์</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr></tbody></table></section>
+<section class="slide" id="s-decisions-2"><h2>Decisions already made (continued)</h2><table><thead><tr><th>Decision</th><th class="src">Source</th></tr></thead><tbody><tr><td>มีข้อมูลตัวอย่างประมาณ 30 รายการ ครอบคลุมเดือนนี้และเดือนก่อน ทุกหมวดมีข้อมูล พร้อมตัวเลือกล้างข้อมูลก่อนใส่ และมีตัวช่วยล้างรายการทั้งหมด</td><td class="src">plan.md &gt; สคริปต์ seed/reset</td></tr><tr><td>AI รับรูป jpeg/png/webp ขนาดไม่เกิน 5MB และแปลงปี พ.ศ. เป็น ค.ศ. ให้ (สลิปไทยมักใช้ พ.ศ.)</td><td class="src">plan.md &gt; การอ่านสลิป (`tools/extract_receipt.py`)</td></tr><tr><td>หลัง AI ตอบ ระบบตรวจอีกรอบ: ถ้าหมวดไม่ตรงกับประเภท ให้ใช้ &quot;อื่นๆ&quot; และถ้าไม่มีวันที่ ให้ใช้วันนี้</td><td class="src">plan.md &gt; การอ่านสลิป (`tools/extract_receipt.py`)</td></tr></tbody></table></section>
+<section class="slide" id="s-out-of-scope"><h2>Not included</h2><table><thead><tr><th>Left out on purpose</th><th class="src">Source</th></tr></thead><tbody><tr><td>อัปโหลดหลายรูปพร้อมกัน</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>ไฟล์ PDF</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr><tr><td>เก็บรูปสลิป (รูปใช้อ่านแล้วทิ้ง)</td><td class="src">plan.md &gt; สิ่งที่ตกลงกันแล้ว</td></tr></tbody></table></section>
+<section class="slide" id="s-notes"><div class="stage launch"><span class="eyebrow">การอ่านสลิป (`tools/extract_receipt.py`)</span><h2>เมื่อเกิดข้อผิดพลาด</h2><span class="rule"></span><div class="lines"><p>ถ้าเกิดข้อผิดพลาด (ไม่มีกุญแจเชื่อมต่อ AI, AI ใช้ไม่ได้ หรืออ่านรูปไม่ออก) ระบบแจ้งข้อความภาษาไทย ส่วนหน้าเว็บยังให้กรอกเองได้</p></div><p class="src">Source: plan.md &gt; การอ่านสลิป (`tools/extract_receipt.py`)</p></div></section>
+<section class="slide" id="s-notes-2"><div class="stage launch"><span class="eyebrow">หน้าเว็บ (`static/`)</span><h2>การรีเฟรชหน้าจอ</h2><span class="rule"></span><div class="lines"><p>ทุกครั้งที่บันทึก แก้ หรือลบ ส่วนสรุปและตารางจะรีเฟรชทันที</p></div><p class="src">Source: plan.md &gt; หน้าเว็บ (`static/`)</p></div></section>
+<section class="slide" id="s-notes-3"><div class="stage launch"><span class="eyebrow">API (`app.py`)</span><h2>ระบบรับส่งข้อมูลของแอป</h2><span class="rule"></span><div class="lines"><p>ตัวแอปมีคำสั่งสำหรับ ดูรายการหมวดหมู่ ดู เพิ่ม แก้ ลบรายการ (กรองตามเดือนได้ ถ้าไม่เลือกเดือนคือทั้งหมด) ดูสรุป และอ่านสลิปจากรูป ซึ่งคืนค่าให้ตรวจแต่ยังไม่บันทึก</p></div><p class="src">Source: plan.md &gt; API (`app.py`)</p></div></section>
+<section class="slide" id="s-check"><h2>Please check</h2><p>Tick each item once you have checked it. Ticks are saved in this browser only.</p><ul class="checks"><li><label><input type="checkbox" data-key="exec-summary:dd0db7ae58:6e7af9117c"><span>The goal describes what I want.</span></label></li><li><label><input type="checkbox" data-key="exec-summary:dd0db7ae58:e1b8197d97"><span>การตรวจสอบก่อนใช้เดโม: ใส่ข้อมูลตัวอย่าง แล้วเปิดหน้าเว็บ ต้องเห็นการ์ด แผนภูมิ 2 วง และตารางครบ; สลับเดือน ตัวเลขในการ์ด แผนภูมิ และตารางต้องเปลี่ยนตาม และรวมกันได้เท่ากับยอด &quot;ทั้งหมด&quot;; กรอกเอง เพิ่ม แก้ และลบรายการ ส่วนสรุปต้องอัปเดตทันที; ทดสอบอ่านสลิปโอนออก สลิปรับโอน และใบเสร็จร้านค้า แต่ละใบต้องได้ประเภท ยอดเงิน วันที่ (ค.ศ.) และหมวดที่ถูกต้อง (ใช้ AI จริง ค่าใช้จ่ายราว 1 บาทต่อใบ); อัปโหลดสลิปผ่านหน้าเว็บ ค่าต้องขึ้นในฟอร์มโดยยังไม่บันทึก จากนั้นกดบันทึกแล้วรายการต้องปรากฏในตาราง; ทดสอบกรณีผิดพลาด (ไม่มีกุญแจเชื่อมต่อ AI หรืออัปโหลดรูปที่ไม่ใช่สลิป) ต้องมีข้อความภาษาไทยแจ้ง และแอปต้องไม่พัง; ถ่ายภาพหน้าจอที่ความกว้าง 1920px เพื่อดูความเรียบร้อย</span></label></li></ul></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js" integrity="sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I" crossorigin="anonymous" defer></script>
+<script>
+(function () {
+  var root = document.documentElement;
+  root.className += " js";
+
+  var slides = Array.prototype.slice.call(document.querySelectorAll(".slide"));
+  var count = document.getElementById("count");
+  var toc = document.querySelector(".toc");
+  var current = 0;
+
+  function read(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function write(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch (e) {
+      /* storage can be blocked; the deck still works without it */
+    }
+  }
+
+  function show(index) {
+    if (!slides.length) {
+      return;
+    }
+    current = Math.max(0, Math.min(slides.length - 1, index));
+    slides.forEach(function (slide, i) {
+      slide.classList.toggle("active", i === current);
+    });
+    count.textContent = "Slide " + (current + 1) + " of " + slides.length;
+    document.getElementById("prev").disabled = current === 0;
+    document.getElementById("next").disabled = current === slides.length - 1;
+    window.scrollTo(0, 0);
+  }
+
+  function showFromHash() {
+    var id = window.location.hash.replace("#", "");
+    for (var i = 0; i < slides.length; i++) {
+      if (slides[i].id === id) {
+        show(i);
+        return;
+      }
+    }
+    show(0);
+  }
+
+  document.getElementById("prev").addEventListener("click", function () {
+    show(current - 1);
+  });
+  document.getElementById("next").addEventListener("click", function () {
+    show(current + 1);
+  });
+
+  toc.addEventListener("click", function (event) {
+    if (event.target.tagName === "A") {
+      toc.removeAttribute("open");
+    }
+  });
+
+  window.addEventListener("hashchange", showFromHash);
+
+  document.addEventListener("keydown", function (event) {
+    var target = event.target;
+    var isTyping =
+      target.tagName === "TEXTAREA" ||
+      target.isContentEditable ||
+      (target.tagName === "INPUT" && target.type !== "checkbox");
+    if (isTyping || event.altKey || event.ctrlKey || event.metaKey) {
+      return;
+    }
+    if (event.key === "ArrowRight" || event.key === "PageDown") {
+      show(current + 1);
+    } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+      show(current - 1);
+    } else if (event.key === "Home") {
+      show(0);
+    } else if (event.key === "End") {
+      show(slides.length - 1);
+    }
+  });
+
+  var themeKey = "exec-summary:theme";
+  var savedTheme = read(themeKey);
+  if (savedTheme === "light" || savedTheme === "dark") {
+    root.setAttribute("data-theme", savedTheme);
+  }
+  var themeSwitch = document.getElementById("theme");
+  var systemQuery = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+
+  function isDark() {
+    var explicit = root.getAttribute("data-theme");
+    return explicit ? explicit === "dark" : !!(systemQuery && systemQuery.matches);
+  }
+
+  function syncSwitch() {
+    themeSwitch.setAttribute("aria-checked", isDark() ? "true" : "false");
+  }
+
+  themeSwitch.addEventListener("click", function () {
+    var next = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    write(themeKey, next);
+    syncSwitch();
+    drawDiagrams();
+  });
+  if (systemQuery && systemQuery.addEventListener) {
+    systemQuery.addEventListener("change", function () {
+      syncSwitch();
+      drawDiagrams();
+    });
+  }
+  syncSwitch();
+
+  var boxes = document.querySelectorAll("input[data-key]");
+  Array.prototype.forEach.call(boxes, function (box) {
+    box.checked = read(box.getAttribute("data-key")) === "1";
+    box.addEventListener("change", function () {
+      write(box.getAttribute("data-key"), box.checked ? "1" : "0");
+    });
+  });
+
+  var drawCount = 0;
+  var DRAW_TIMEOUT = 8000;
+
+  /* A diagram box is "drawn" (picture shown) or "failed" (table of nodes and edges shown). With
+     no state yet, a short "Drawing" text shows instead of the raw definition. */
+  function setState(box, state) {
+    box.setAttribute("data-state", state);
+    box.querySelector(".diagram-fallback").hidden = state !== "failed";
+  }
+
+  /* Mermaid's "base" theme takes its colours from the same CSS tokens the deck uses, so diagrams
+     match light and dark. To read the tokens of the other mode, data-theme is switched for an
+     instant and put back before anything is painted. */
+  function diagramTheme(mode) {
+    var saved = root.getAttribute("data-theme");
+    root.setAttribute("data-theme", mode);
+    var style = window.getComputedStyle(root);
+    function token(name) {
+      return style.getPropertyValue(name).trim();
+    }
+    var theme = {
+      theme: "base",
+      themeVariables: {
+        background: token("--surface"),
+        primaryColor: token("--card"),
+        primaryTextColor: token("--text"),
+        primaryBorderColor: token("--accent"),
+        secondaryColor: token("--accent-soft"),
+        tertiaryColor: token("--surface"),
+        textColor: token("--text"),
+        lineColor: token("--muted"),
+        mainBkg: token("--card"),
+        nodeBorder: token("--accent"),
+        clusterBkg: token("--accent-soft"),
+        clusterBorder: token("--line"),
+        edgeLabelBackground: token("--surface"),
+        titleColor: token("--text"),
+      },
+    };
+    if (saved === null) {
+      root.removeAttribute("data-theme");
+    } else {
+      root.setAttribute("data-theme", saved);
+    }
+    return theme;
+  }
+
+  function renderSvg(definition, theme) {
+    drawCount += 1;
+    var id = "diagram-" + drawCount;
+    /* The theme travels with each definition, so overlapping draws cannot mix themes up. */
+    var config = theme;
+    if (/^\s*flowchart LR/.test(definition)) {
+      /* A flow drawn left to right gets narrow boxes, so a long one fits the slide at a readable size. */
+      config = Object.assign({}, theme, { flowchart: { wrappingWidth: 130 } });
+    }
+    var text = "%%{init: " + JSON.stringify(config) + "}%%\n" + definition;
+    return window.mermaid.render(id, text).then(
+      function (result) {
+        return result.svg;
+      },
+      function (error) {
+        var leftover = document.getElementById("d" + id);
+        if (leftover) {
+          leftover.remove();
+        }
+        throw error;
+      }
+    );
+  }
+
+  /* Mermaid draws off screen, so diagrams on hidden slides are drawn too. Each diagram is drawn
+     twice: once in the current theme for the screen, once light for printing. */
+  function drawDiagram(box, theme) {
+    var pre = box.querySelector(".mermaid");
+    var printed = box.querySelector(".mermaid-print");
+    if (pre.definition === undefined) {
+      pre.definition = pre.textContent;
+    }
+    Promise.all([renderSvg(pre.definition, theme), renderSvg(pre.definition, diagramTheme("light"))])
+      .then(function (svgs) {
+        pre.innerHTML = svgs[0];
+        printed.innerHTML = svgs[1];
+        setState(box, "drawn");
+      })
+      .catch(function () {
+        setState(box, "failed");
+      });
+  }
+
+  function drawDiagrams() {
+    var boxes = document.querySelectorAll(".diagram");
+    if (!boxes.length) {
+      return;
+    }
+    var theme = diagramTheme(isDark() ? "dark" : "light");
+    Array.prototype.forEach.call(boxes, function (box) {
+      if (!window.mermaid) {
+        setState(box, "failed");
+        return;
+      }
+      try {
+        window.mermaid.initialize({ startOnLoad: false, securityLevel: "strict" });
+        drawDiagram(box, theme);
+      } catch (e) {
+        setState(box, "failed");
+      }
+    });
+  }
+
+  /* If Mermaid is slow to load, show the table. A later successful draw replaces it. */
+  window.setTimeout(function () {
+    Array.prototype.forEach.call(document.querySelectorAll(".diagram:not([data-state])"), function (box) {
+      setState(box, "failed");
+    });
+  }, DRAW_TIMEOUT);
+
+  if (document.readyState === "complete") {
+    drawDiagrams();
+  } else {
+    window.addEventListener("load", drawDiagrams);
+  }
+  showFromHash();
+})();
+
+</script>
+</body>
+</html>
