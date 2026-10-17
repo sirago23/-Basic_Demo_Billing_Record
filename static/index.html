@@ -5,28 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>บันทึกรายรับ-รายจ่าย</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <header><h1>บันทึกรายรับ-รายจ่าย</h1><nav><a href="/" class="active" aria-current="page">สรุป</a><a href="/list">รายการ</a><a href="/add">เพิ่มรายการ</a></nav></header>
+  <header class="top"><div class="brand"><span class="logo">฿</span>บันทึกรายรับ-รายจ่าย</div><nav><a href="/" class="active" aria-current="page">สรุป</a><a href="/list">รายการ</a><a href="/add">เพิ่มรายการ</a></nav><select id="month" aria-label="เดือน"></select></header>
   <main>
-    <section class="panel" id="summary-section">
-      <div class="row">
-        <h2>สรุป</h2>
-        <select id="month"></select>
+    <section class="hero" id="summary-section">
+      <div><div class="lb">คงเหลือ</div><div class="big" id="c-balance">฿0.00</div></div>
+      <div class="stats">
+        <div class="stat in"><span class="ar"><svg viewBox="0 0 24 24"><path d="M17 7 7 17M15 17H7V9"/></svg></span><span>รายรับรวม</span><b id="c-income">฿0.00</b></div>
+        <div class="stat out"><span class="ar"><svg viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg></span><span>รายจ่ายรวม</span><b id="c-expense">฿0.00</b></div>
       </div>
-      <div class="cards">
-        <div class="card income"><span>รายรับรวม</span><b id="c-income">฿0.00</b></div>
-        <div class="card expense"><span>รายจ่ายรวม</span><b id="c-expense">฿0.00</b></div>
-        <div class="card balance"><span>คงเหลือ</span><b id="c-balance">฿0.00</b></div>
-      </div>
-      <div class="charts">
-        <div><h3>รายจ่ายตามหมวด</h3><div class="chart-box"><canvas id="chart-expense"></canvas><p class="empty" hidden>ไม่มีข้อมูล</p></div></div>
-        <div><h3>รายรับตามหมวด</h3><div class="chart-box"><canvas id="chart-income"></canvas><p class="empty" hidden>ไม่มีข้อมูล</p></div></div>
-      </div>
+      <div class="ratio"><div><span id="c-ratio"></span></div><span id="c-ratio-text"></span></div>
     </section>
+    <div class="charts">
+      <section class="card"><h3>รายจ่ายตามหมวด</h3><div class="chart-box"><canvas id="chart-expense"></canvas><p class="empty" hidden>ไม่มีข้อมูล</p></div></section>
+      <section class="card"><h3>รายรับตามหมวด</h3><div class="chart-box"><canvas id="chart-income"></canvas><p class="empty" hidden>ไม่มีข้อมูล</p></div></section>
+    </div>
   </main>
   <script src="/static/app.js"></script>
 </body>

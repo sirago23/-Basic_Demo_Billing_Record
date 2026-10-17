@@ -1,6 +1,6 @@
 const fmt = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 2 });
 const $ = (id) => document.getElementById(id);
-const COLORS = ['#2563eb', '#dc2626', '#16a34a', '#f59e0b', '#8b5cf6', '#0891b2', '#db2777', '#65a30d', '#64748b'];
+const COLORS = ['#0f1a2a', '#0f6e5c', '#3d8db0', '#93bccd', '#c9a35c', '#c8cfda', '#8a6fb0', '#d2525c', '#64748b'];
 
 let categories = { expense: [], income: [] };
 let currentType = 'expense';
@@ -158,17 +158,18 @@ function renderChart(id, rows) {
   if (!rows.length) return;
   const total = rows.reduce((s, r) => s + r.total, 0);
   charts[id] = new Chart(canvas, {
-    type: 'pie',
+    type: 'doughnut',
     data: {
       labels: rows.map((r) => r.category),
-      datasets: [{ data: rows.map((r) => r.total), backgroundColor: rows.map((_, i) => COLORS[i % COLORS.length]) }],
+      datasets: [{ data: rows.map((r) => r.total), backgroundColor: rows.map((_, i) => COLORS[i % COLORS.length]), borderWidth: 2, borderColor: '#fff' }],
     },
     options: {
       maintainAspectRatio: false,
+      cutout: '62%',
       plugins: {
-        legend: { position: 'right', labels: { font: { size: 16, family: 'Sarabun' } } },
+        legend: { position: window.innerWidth < 800 ? 'bottom' : 'right', labels: { font: { size: 15, family: 'IBM Plex Sans Thai' }, usePointStyle: true, pointStyle: 'rectRounded' } },
         tooltip: {
-          bodyFont: { size: 16, family: 'Sarabun' },
+          bodyFont: { size: 15, family: 'IBM Plex Sans Thai' },
           callbacks: {
             label: (ctx) => ` ${ctx.label}: ${fmt.format(ctx.parsed)} (${((ctx.parsed / total) * 100).toFixed(1)}%)`,
           },
@@ -185,6 +186,9 @@ async function loadSummary() {
     $('c-income').textContent = fmt.format(s.income);
     $('c-expense').textContent = fmt.format(s.expense);
     $('c-balance').textContent = fmt.format(s.balance);
+    const pct = s.income > 0 ? (s.expense / s.income) * 100 : 0;
+    $('c-ratio').style.width = `${Math.min(100, pct)}%`;
+    $('c-ratio-text').textContent = s.income > 0 ? `ใช้ไปแล้ว ${pct.toFixed(1)}% ของรายรับ` : 'ยังไม่มีรายรับในช่วงนี้';
     renderChart('chart-expense', s.by_category.expense);
     renderChart('chart-income', s.by_category.income);
   }

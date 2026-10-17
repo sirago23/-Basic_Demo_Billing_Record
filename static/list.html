@@ -5,18 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>บันทึกรายรับ-รายจ่าย</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Noto+Sans+Thai:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <header><h1>บันทึกรายรับ-รายจ่าย</h1><nav><a href="/">สรุป</a><a href="/list" class="active" aria-current="page">รายการ</a><a href="/add">เพิ่มรายการ</a></nav></header>
+  <header class="top"><div class="brand"><span class="logo">฿</span>บันทึกรายรับ-รายจ่าย</div><nav><a href="/">สรุป</a><a href="/list" class="active" aria-current="page">รายการ</a><a href="/add">เพิ่มรายการ</a></nav><select id="month" aria-label="เดือน"></select></header>
   <main>
     <section class="panel" id="table-section">
-      <div class="row"><h2>รายการ</h2><select id="month"></select></div>
-      <table>
-        <thead><tr><th>วันที่</th><th>ประเภท</th><th>หมวด</th><th>รายละเอียด</th><th class="num">จำนวนเงิน</th><th></th></tr></thead>
-        <tbody id="tbody"></tbody>
-      </table>
+      <h2>รายการ</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>วันที่</th><th>ประเภท</th><th>หมวด</th><th>รายละเอียด</th><th class="num">จำนวนเงิน</th><th></th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
       <p class="empty" id="table-empty" hidden>ยังไม่มีรายการ</p>
     </section>
   </main>
